@@ -37,7 +37,7 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
 
   // Weight Loss fields
   const [currentWeight, setCurrentWeight] = useState("");
-  const [targetWeightLoss, setTargetWeightLoss] = useState("");
+  const [targetWeight, setTargetWeight] = useState("");
 
   // Reading fields
   const [booksRead, setBooksRead] = useState("");
@@ -47,15 +47,21 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
   const [deadline, setDeadline] = useState("");
   const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
 
+  // Validation errors
+  const [weightError, setWeightError] = useState("");
+  const [deadlineError, setDeadlineError] = useState("");
+
   const resetForm = () => {
     setStep("type");
     setSelectedType(null);
     setCurrentWeight("");
-    setTargetWeightLoss("");
+    setTargetWeight("");
     setBooksRead("");
     setTargetBooks("");
     setDeadline("");
     setSelectedHabits([]);
+    setWeightError("");
+    setDeadlineError("");
   };
 
   const handleTypeSelect = (type: GoalType) => {
@@ -65,6 +71,32 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setWeightError("");
+    setDeadlineError("");
+
+    // Validate deadline is in the future
+    const selectedDate = new Date(deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for fair comparison
+
+    if (selectedDate < today) {
+      setDeadlineError("Target date must be in the future");
+      return;
+    }
+
+    // Validate weight loss goal
+    if (selectedType === "weight-loss") {
+      const currentWeightNum = parseFloat(currentWeight);
+      const targetWeightNum = parseFloat(targetWeight);
+
+      if (targetWeightNum >= currentWeightNum) {
+        setWeightError("Target weight must be less than current weight");
+        return;
+      }
+    }
+
     setStep("habits");
   };
 
@@ -91,13 +123,14 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
 
     if (selectedType === "weight-loss") {
       const currentWeightNum = parseFloat(currentWeight);
-      const targetWeightLossNum = parseFloat(targetWeightLoss);
+      const targetWeightNum = parseFloat(targetWeight);
+      const weightLossNum = currentWeightNum - targetWeightNum;
       goalData = {
         ...goalData,
-        title: `Lose ${targetWeightLossNum}kg`,
+        title: `Lose ${weightLossNum.toFixed(1)}kg`,
         currentWeight: currentWeightNum,
-        targetWeightLoss: targetWeightLossNum,
-        targetValue: targetWeightLossNum,
+        targetWeightLoss: weightLossNum,
+        targetValue: weightLossNum,
         unit: "kg",
       };
     } else if (selectedType === "reading") {
@@ -138,7 +171,7 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="grid gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         {(Object.keys(goalTemplates) as GoalType[]).map((type) => {
           const config = goalTemplates[type];
           return (
@@ -149,7 +182,7 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">{config.icon}</span>
+                  <span className="text-lg">{config.icon}</span>
                   {config.title}
                 </CardTitle>
                 <CardDescription>{config.description}</CardDescription>
@@ -194,18 +227,23 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="target-weight-loss">
-                    Target Weight Loss (kg)
-                  </Label>
+                  <Label htmlFor="target-weight">Target Weight (kg)</Label>
                   <Input
-                    id="target-weight-loss"
+                    id="target-weight"
                     type="number"
                     step="0.1"
-                    placeholder="e.g., 10"
-                    value={targetWeightLoss}
-                    onChange={(e) => setTargetWeightLoss(e.target.value)}
+                    placeholder="e.g., 70"
+                    value={targetWeight}
+                    onChange={(e) => {
+                      setTargetWeight(e.target.value);
+                      setWeightError(""); // Clear error on change
+                    }}
                     required
+                    className={weightError ? "border-destructive" : ""}
                   />
+                  {weightError && (
+                    <p className="text-sm text-destructive">{weightError}</p>
+                  )}
                 </div>
               </div>
             </>
@@ -245,9 +283,16 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
               id="deadline"
               type="date"
               value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
+              onChange={(e) => {
+                setDeadline(e.target.value);
+                setDeadlineError(""); // Clear error on change
+              }}
               required
+              className={deadlineError ? "border-destructive" : ""}
             />
+            {deadlineError && (
+              <p className="text-sm text-destructive">{deadlineError}</p>
+            )}
           </div>
 
           <div className="flex justify-between gap-3 pt-4">

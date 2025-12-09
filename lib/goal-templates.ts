@@ -21,19 +21,20 @@ export const goalTemplates: Record<GoalType, GoalTypeConfig> = {
     id: "weight-loss",
     title: "Weight Loss",
     icon: "⚖️",
-    description: "Track your weight loss journey",
+    description:
+      "We'll help you lose weight. And believe me, you will lose it!",
     habitTemplates: [
       {
         id: "gym",
         name: "Gym Sessions",
-        description: "Regular gym workouts",
+        description: "At least 1 hour of gym every day",
         color: "#ef4444",
         frequency: "daily",
       },
       {
         id: "bodyweight",
         name: "Bodyweight Training",
-        description: "E.g., 100 pushups, planks",
+        description: "100 pushups every morning or evening",
         color: "#f59e0b",
         frequency: "daily",
       },
@@ -47,7 +48,7 @@ export const goalTemplates: Record<GoalType, GoalTypeConfig> = {
       {
         id: "autophagy",
         name: "Autophagy Marathon",
-        description: "Extended fasting periods",
+        description: "Extended fasting periods - at least 48 hours",
         color: "#06b6d4",
         frequency: "flexible",
       },
@@ -61,14 +62,14 @@ export const goalTemplates: Record<GoalType, GoalTypeConfig> = {
       {
         id: "jogging",
         name: "Jogging",
-        description: "Regular jogging sessions",
+        description: "5km jogging every morning or evening",
         color: "#3b82f6",
         frequency: "daily",
       },
       {
         id: "walking",
         name: "Walking",
-        description: "Daily walks",
+        description: "5km walking every morning or evening",
         color: "#6366f1",
         frequency: "daily",
       },
