@@ -7,13 +7,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function TrackingPage() {
   const { habits, habitLogs, logHabit, isLoading } = useHabits();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const dateStr = selectedDate.toISOString().split("T")[0];
-  const isToday = dateStr === new Date().toISOString().split("T")[0];
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  const isToday = dateStr === todayStr;
+  const isPastDate = dateStr < todayStr;
 
   // Get logs for selected date
   const dayLogs = useMemo(() => {
@@ -35,6 +39,53 @@ export default function TrackingPage() {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + (direction === "next" ? 1 : -1));
     setSelectedDate(newDate);
+  };
+
+  const handleToggleHabit = (habitId: string, currentCompleted: boolean) => {
+    if (isPastDate) return;
+
+    const habitToToggle = habits.find((h) => h._id === habitId);
+    if (!habitToToggle) return;
+
+    const newCompleted = !currentCompleted;
+
+    // Mutual exclusivity logic
+    if (newCompleted) {
+      if (habitToToggle.templateId === "omad") {
+        // OMAD conflicts with Autophagy
+        const autophagyLog = dayLogs.find(
+          (l) => l.habit.templateId === "autophagy" && l.completed
+        );
+        if (autophagyLog) {
+          logHabit(autophagyLog.habit._id, dateStr, false);
+        }
+      } else if (habitToToggle.templateId === "moran") {
+        // Moran conflicts with Autophagy
+        const autophagyLog = dayLogs.find(
+          (l) => l.habit.templateId === "autophagy" && l.completed
+        );
+        if (autophagyLog) {
+          logHabit(autophagyLog.habit._id, dateStr, false);
+        }
+      } else if (habitToToggle.templateId === "autophagy") {
+        // Autophagy conflicts with OMAD and Moran
+        const omadLog = dayLogs.find(
+          (l) => l.habit.templateId === "omad" && l.completed
+        );
+        if (omadLog) {
+          logHabit(omadLog.habit._id, dateStr, false);
+        }
+
+        const moranLog = dayLogs.find(
+          (l) => l.habit.templateId === "moran" && l.completed
+        );
+        if (moranLog) {
+          logHabit(moranLog.habit._id, dateStr, false);
+        }
+      }
+    }
+
+    logHabit(habitId as any, dateStr, newCompleted);
   };
 
   const formatDate = (date: Date) => {
@@ -59,6 +110,31 @@ export default function TrackingPage() {
     return days;
   }, [selectedDate]);
 
+  // Calculate max achievable habits considering mutual exclusivity dynamically based on daily logs
+  const maxAchievable = useMemo(() => {
+    const hasAutophagy = habits.some((h) => h.templateId === "autophagy");
+    const hasOmad = habits.some((h) => h.templateId === "omad");
+    const hasMoran = habits.some((h) => h.templateId === "moran");
+
+    // If no conflict habits exist, return total length
+    if (!hasAutophagy && !hasOmad && !hasMoran) return habits.length;
+
+    // Check if Autophagy is completed for the selected date
+    const autophagyCompleted = dayLogs.some(
+      (l) => l.habit.templateId === "autophagy" && l.completed
+    );
+
+    const conflictGroupTotal =
+      (hasAutophagy ? 1 : 0) + (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+    // If Autophagy is done, max from group is 1. Otherwise, it's OMAD + Moran (2)
+    const currentMaxForGroup = autophagyCompleted
+      ? 1
+      : (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+    return habits.length - conflictGroupTotal + currentMaxForGroup;
+  }, [habits, dayLogs]);
+
   return (
     <div className="p-3 md:p-8 py-4">
       {/* Header */}
@@ -70,7 +146,7 @@ export default function TrackingPage() {
       </div>
 
       {/* Date Navigator */}
-      <Card className="mb-6 border-border/50 bg-card/50">
+      <Card className="mb-6 border-none bg-muted">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <Button
@@ -85,6 +161,11 @@ export default function TrackingPage() {
                 {formatDate(selectedDate)}
               </p>
               {isToday && <span className="text-sm text-primary">Today</span>}
+              {isPastDate && (
+                <span className="text-sm text-muted-foreground">
+                  Past - View Only
+                </span>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -126,17 +207,20 @@ export default function TrackingPage() {
                 const isSelected = dayString === dateStr;
                 const dayLogs = habitLogs.filter((l) => l.date === dayString);
                 const completed = dayLogs.filter((l) => l.completed).length;
-                const total = habits.length;
+                const total = maxAchievable;
                 const percentage = total > 0 ? (completed / total) * 100 : 0;
 
                 return (
                   <button
                     key={dayString}
                     onClick={() => setSelectedDate(day)}
+                    disabled={dayString > todayStr}
                     className={`flex flex-1 flex-col items-center rounded-lg p-2 transition-colors ${
                       isSelected
                         ? "bg-primary/20 text-primary"
-                        : "hover:bg-secondary"
+                        : dayString > todayStr
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-secondary"
                     }`}
                   >
                     <span className="text-xs text-muted-foreground">
@@ -164,21 +248,37 @@ export default function TrackingPage() {
         <div>
           <p className="text-sm text-muted-foreground">Progress</p>
           <p className="text-2xl font-bold">
-            {completedCount} / {habits.length}
+            {completedCount} / {maxAchievable}
           </p>
         </div>
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-          <span className="text-xl font-bold text-primary">
-            {habits.length > 0
-              ? Math.round((completedCount / habits.length) * 100)
-              : 0}
-            %
-          </span>
-        </div>
+        <Badge
+          variant={
+            completedCount === 0
+              ? "destructive"
+              : completedCount === maxAchievable
+                ? "default"
+                : "secondary"
+          }
+        >
+          {maxAchievable > 0
+            ? Math.round((completedCount / maxAchievable) * 100)
+            : 0}
+          %
+        </Badge>
       </div>
 
+      {/* Past Date Warning */}
+      {isPastDate && (
+        <div className="mb-6 rounded-lg border-none bg-destructive/10 p-4">
+          <p className="text-sm font-medium text-destructive">
+            ⚠️ Past records are final and cannot be edited. If you missed
+            logging a habit, it's gone. Stay consistent to build your streak!
+          </p>
+        </div>
+      )}
+
       {/* Habits Checklist */}
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {isLoading ? (
           <>
             {[...Array(3)].map((_, i) => (
@@ -206,19 +306,22 @@ export default function TrackingPage() {
           dayLogs.map(({ habit, completed }) => (
             <Card
               key={habit._id}
-              className={`cursor-pointer border-border/50 transition-all ${
-                completed
-                  ? "bg-primary/10 border-primary/30"
-                  : "bg-card/50 hover:border-primary/30"
+              className={`border-border/50 transition-all ${
+                completed ? "bg-primary/10 border-primary/30" : "bg-card/50"
+              } ${
+                isPastDate
+                  ? "opacity-70 cursor-not-allowed"
+                  : "cursor-pointer hover:border-primary/30"
               }`}
-              onClick={() => logHabit(habit._id, dateStr, !completed)}
+              onClick={() => handleToggleHabit(habit._id, completed)}
             >
               <CardContent className="flex items-center gap-4 py-4">
                 <Checkbox
                   checked={completed}
-                  onCheckedChange={(checked) =>
-                    logHabit(habit._id, dateStr, checked as boolean)
+                  onCheckedChange={() =>
+                    handleToggleHabit(habit._id, completed)
                   }
+                  disabled={isPastDate}
                   className="h-6 w-6"
                 />
                 <div

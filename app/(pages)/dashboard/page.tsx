@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   Sparkles,
 } from "lucide-react";
-import { AddHabitDialog } from "@/components/add-habit-dialogue";
 import { AddGoalDialog } from "@/components/add-goal-dialogue";
 import {
   Empty,
@@ -35,7 +34,6 @@ import {
 export default function DashboardPage() {
   const { habits, goals, habitLogs, isLoading } = useHabits();
   const { user } = useUser();
-  const [showAddHabit, setShowAddHabit] = useState(false);
   const [showAddGoal, setShowAddGoal] = useState(false);
 
   // Calculate overview stats
@@ -214,14 +212,8 @@ export default function DashboardPage() {
 
       {/* Habits Section */}
       <div className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4">
           <h2 className="text-xl font-semibold">Your Habits</h2>
-          {habits.length > 0 && (
-            <Button onClick={() => setShowAddHabit(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Habit
-            </Button>
-          )}
         </div>
 
         {isLoading ? (
@@ -255,15 +247,9 @@ export default function DashboardPage() {
               </EmptyMedia>
               <EmptyTitle>No habits yet</EmptyTitle>
               <EmptyDescription>
-                Start building better habits today!
+                Create a goal to get started with preset habits!
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={() => setShowAddHabit(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Habit
-              </Button>
-            </EmptyContent>
           </Empty>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -275,7 +261,6 @@ export default function DashboardPage() {
       </div>
 
       {/* Dialogs */}
-      <AddHabitDialog open={showAddHabit} onOpenChange={setShowAddHabit} />
       <AddGoalDialog open={showAddGoal} onOpenChange={setShowAddGoal} />
     </div>
   );
