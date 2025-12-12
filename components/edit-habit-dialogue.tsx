@@ -70,7 +70,6 @@ export function EditHabitDialog({
       name,
       description,
       frequency,
-      goalId: goalId === "no-goal" ? null : goalId,
       color,
     });
 

@@ -47,17 +47,22 @@ export function AddHabitDialog({ open, onOpenChange }: AddHabitDialogProps) {
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "flexible">(
     "daily"
   );
-  const [goalId, setGoalId] = useState<Id<"goals"> | "no-goal">("no-goal");
+  const [goalId, setGoalId] = useState<Id<"goals"> | "">("");
   const [color, setColor] = useState(colors[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!goalId) {
+      return; // Goal is required
+    }
+
     addHabit({
       name,
       description,
       frequency,
-      goalId: goalId === "no-goal" ? undefined : (goalId as Id<"goals">),
+      goalId: goalId as Id<"goals">,
+      templateId: "custom", // Custom habit template
       color,
     });
 
@@ -65,7 +70,7 @@ export function AddHabitDialog({ open, onOpenChange }: AddHabitDialogProps) {
     setName("");
     setDescription("");
     setFrequency("daily");
-    setGoalId("no-goal");
+    setGoalId("");
     setColor(colors[0]);
     onOpenChange(false);
   };
@@ -76,7 +81,7 @@ export function AddHabitDialog({ open, onOpenChange }: AddHabitDialogProps) {
         <DialogHeader>
           <DialogTitle>Add New Habit</DialogTitle>
           <DialogDescription>
-            Create a new habit to track. You can optionally link it to a goal.
+            Create a new habit to track. Each habit must be linked to a goal.
           </DialogDescription>
         </DialogHeader>
 
@@ -121,16 +126,16 @@ export function AddHabitDialog({ open, onOpenChange }: AddHabitDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Link to Goal (Optional)</Label>
+            <Label>Link to Goal</Label>
             <Select
               value={goalId}
-              onValueChange={(v) => setGoalId(v as Id<"goals"> | "no-goal")}
+              onValueChange={(v) => setGoalId(v as Id<"goals">)}
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a goal" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="no-goal">No goal</SelectItem>
                 {goals.map((goal) => (
                   <SelectItem key={goal._id} value={goal._id}>
                     {goal.title}
