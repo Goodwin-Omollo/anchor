@@ -58,16 +58,14 @@ export function HabitCard({ habit }: HabitCardProps) {
 
   return (
     <>
-      <Card className="border-none bg-muted backdrop-blur">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-          <div className="flex items-center gap-3">
+      <Card className=" backdrop-blur">
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div className="flex items-center gap-2">
             <div
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: habit.color }}
             />
-            <CardTitle className="text-base font-medium">
-              {habit.name}
-            </CardTitle>
+            <CardTitle className="font-medium">{habit.name}</CardTitle>
           </div>
           <Button
             variant="ghost"
@@ -80,7 +78,7 @@ export function HabitCard({ habit }: HabitCardProps) {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{habit.description}</p>
+          <p className="text-sm ">{habit.description}</p>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
@@ -97,14 +95,14 @@ export function HabitCard({ habit }: HabitCardProps) {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Weekly Progress</span>
+              <span className="">Weekly Progress</span>
               <span className="font-medium">{completionRate}%</span>
             </div>
             <Progress value={completionRate} className="h-2" />
           </div>
 
           {linkedGoal && (
-            <Badge variant="default" className="text-xs px-2 py-1">
+            <Badge variant="secondary" className="text-xs px-2 py-1">
               Goal: {linkedGoal.title}
             </Badge>
           )}
@@ -114,10 +112,10 @@ export function HabitCard({ habit }: HabitCardProps) {
       <AlertDialog open={showEncouragement} onOpenChange={setShowEncouragement}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-xl">
+            <AlertDialogTitle className="text-center">
               Stay Strong! 💪
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-base">
+            <AlertDialogDescription className="text-center">
               {currentMessage}
             </AlertDialogDescription>
           </AlertDialogHeader>

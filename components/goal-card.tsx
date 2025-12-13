@@ -18,6 +18,7 @@ import {
 import { MoreHorizontal, Target, Calendar, Edit, Trash2 } from "lucide-react";
 import { EditGoalDialog } from "./edit-goal-dialogue";
 import { LogProgressDialog } from "./log-progress-dialog";
+import { Badge } from "./ui/badge";
 
 interface GoalCardProps {
   goal: Goal;
@@ -39,12 +40,10 @@ export function GoalCard({ goal }: GoalCardProps) {
 
   return (
     <>
-      <Card className="border-none bg-muted backdrop-blur">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Target className="h-4 w-4 text-primary" />
-            </div>
+      <Card className=" backdrop-blur">
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div className="flex items-center gap-1">
+            <div>🎯</div>
             <CardTitle className="text-base font-medium">
               {goal.title}
             </CardTitle>
@@ -77,29 +76,31 @@ export function GoalCard({ goal }: GoalCardProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold">{goal.currentValue}</span>
-            <span className="text-muted-foreground">
-              / {goal.targetValue} {goal.unit}
+            <span className="text-2xl font-bold">
+              {goal.currentValue.toFixed(1)}
+            </span>
+            <span className="">
+              / {goal.targetValue.toFixed(1)} {goal.unit}
             </span>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Progress</span>
+              <span className="">Progress</span>
               <span className="font-medium">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
+            <div className="flex items-center gap-1.5 ">
               <Calendar className="h-4 w-4" />
               <span>Deadline: {deadlineDate}</span>
             </div>
           </div>
 
           {projectedDate && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs ">
               Projected completion:{" "}
               <span className="font-medium text-primary">{projectedDate}</span>
             </p>
@@ -108,16 +109,13 @@ export function GoalCard({ goal }: GoalCardProps) {
           {linkedHabits.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {linkedHabits.map((habit) => (
-                <span
-                  key={habit._id}
-                  className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs"
-                >
+                <Badge key={habit._id} variant="secondary">
                   <span
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: habit.color }}
                   />
                   {habit.name}
-                </span>
+                </Badge>
               ))}
             </div>
           )}

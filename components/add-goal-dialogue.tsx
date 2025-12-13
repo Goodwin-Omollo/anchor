@@ -76,13 +76,26 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
     setWeightError("");
     setDeadlineError("");
 
-    // Validate deadline is in the future
+    // Validate deadline is in the future and at least 12 weeks away
     const selectedDate = new Date(deadline);
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day for fair comparison
 
     if (selectedDate < today) {
       setDeadlineError("Target date must be in the future");
+      return;
+    }
+
+    // Calculate duration in days
+    const durationMs = selectedDate.getTime() - today.getTime();
+    const durationDays = durationMs / (1000 * 60 * 60 * 24);
+    const minimumDays = 84; // 12 weeks * 7 days
+
+    if (durationDays < minimumDays) {
+      const weeksShort = Math.ceil((minimumDays - durationDays) / 7);
+      setDeadlineError(
+        `Goal must be at least 12 weeks (3 months). You need ${weeksShort} more week${weeksShort > 1 ? "s" : ""}.`
+      );
       return;
     }
 
@@ -290,6 +303,9 @@ export function AddGoalDialog({ open, onOpenChange }: AddGoalDialogProps) {
               required
               className={deadlineError ? "border-destructive" : ""}
             />
+            <p className="text-xs text-muted-foreground">
+              Minimum commitment: 12 weeks (3 months)
+            </p>
             {deadlineError && (
               <p className="text-sm text-destructive">{deadlineError}</p>
             )}

@@ -1,4 +1,14 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+"use client";
+
+import {
+  Calendar,
+  Home,
+  Inbox,
+  Search,
+  Settings,
+  Users,
+  Trophy,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -12,13 +22,16 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { LuLayoutDashboard } from "react-icons/lu";
-import { MdInsights } from "react-icons/md";
-import { BsGraphUp } from "react-icons/bs";
+import { MdAutoGraph, MdInsights, MdTrackChanges } from "react-icons/md";
+import { BsGraphUp, BsTrophy } from "react-icons/bs";
 import { IoSettingsOutline } from "react-icons/io5";
 import Image from "next/image";
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { ThemeToggler } from "./themeToggler";
+import { NotificationBell } from "./notification-bell";
+import { usePathname } from "next/navigation";
+import { FaUsers } from "react-icons/fa";
 
 // Menu items.
 const items = [
@@ -30,63 +43,61 @@ const items = [
   {
     title: "Tracking",
     url: "/tracking",
-    icon: MdInsights,
+    icon: MdTrackChanges,
   },
   {
     title: "Insights",
     url: "/insights",
-    icon: BsGraphUp,
+    icon: MdAutoGraph,
   },
-  //   {
-  //     title: "Settings",
-  //     url: "/settings",
-  //     icon: IoSettingsOutline,
-  //   },
+  {
+    title: "Communities",
+    url: "/community",
+    icon: FaUsers,
+  },
+  {
+    title: "Achievements",
+    url: "/achievements",
+    icon: BsTrophy,
+  },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
   return (
-    <Sidebar>
+    <Sidebar {...props}>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="mb-4">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/logo.png"
-                alt="Anchor Logo"
-                width={100}
-                height={100}
-              />
-            </Link>
-          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+            <SidebarMenu className="mt-4">
+              {items.map((item) => {
+                const isActive = pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={
+                        isActive
+                          ? "bg-primary! text-white! hover:bg-primary/90!"
+                          : ""
+                      }
+                    >
+                      <Link href={item.url} className="">
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="mx-2 mb-4">
-        <div className="flex items-center justify-between">
-          <div className="">
-            <SignedOut>
-              <SignInButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </div>
-          <ThemeToggler />
-        </div>
+        <NotificationBell />
       </SidebarFooter>
     </Sidebar>
   );
