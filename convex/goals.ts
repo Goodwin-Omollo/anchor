@@ -31,7 +31,23 @@ export const create = mutation({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("goals", {
+    const startDate = new Date().toISOString().split("T")[0];
+    const deadlineDate = new Date(args.deadline);
+    const startDateObj = new Date(startDate);
+
+    // Calculate duration in weeks
+    const durationMs = deadlineDate.getTime() - startDateObj.getTime();
+    const durationDays = durationMs / (1000 * 60 * 60 * 24);
+    const durationWeeks = Math.ceil(durationDays / 7);
+
+    // Enforce minimum 12 weeks
+    if (durationWeeks < 12) {
+      throw new Error(
+        "Goal duration must be at least 12 weeks (84 days). Please choose a deadline at least 3 months from today."
+      );
+    }
+
+    const goalId = await ctx.db.insert("goals", {
       type: args.type,
       title: args.title,
       currentWeight: args.currentWeight,
@@ -41,9 +57,33 @@ export const create = mutation({
       targetValue: args.targetValue,
       currentValue: 0,
       unit: args.unit,
+      startDate,
       deadline: args.deadline,
+      durationWeeks,
       userId: args.userId,
     });
+
+    // Create baseline snapshot (week 0)
+    const endOfWeek = new Date(startDateObj);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+    await ctx.db.insert("weeklyProgress", {
+      goalId,
+      weekNumber: 0,
+      snapshotDate: startDate,
+      weekStartDate: startDate,
+      weekEndDate: endOfWeek.toISOString().split("T")[0],
+      weightValue: args.currentWeight,
+      booksCompleted: args.booksRead || 0,
+      habitsCompletedCount: 0,
+      totalHabitsAvailable: 0,
+      completionRate: 0,
+      hasProgress: false, // Baseline has no previous week to compare
+      progressDelta: 0,
+      userId: args.userId,
+    });
+
+    return goalId;
   },
 });
 
