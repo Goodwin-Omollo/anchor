@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
 import {
   useHabits,
@@ -36,35 +36,100 @@ export default function DashboardPage() {
   const { user } = useUser();
   const [showAddGoal, setShowAddGoal] = useState(false);
 
-  // Calculate overview stats
-  const today = new Date().toISOString().split("T")[0];
-  const todayLogs = habitLogs.filter((log) => log.date === today);
-  const completedToday = todayLogs.filter((log) => log.completed).length;
+  // Calculate today's stats with mutual exclusivity
+  const todayStats = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const todayLogs = habitLogs.filter((log) => log.date === today);
+    const completed = todayLogs.filter((log) => log.completed).length;
+
+    if (habits.length === 0) return { completed, total: 0 };
+
+    const hasAutophagy = habits.some((h) => h.templateId === "autophagy");
+    const hasOmad = habits.some((h) => h.templateId === "omad");
+    const hasMoran = habits.some((h) => h.templateId === "moran");
+    const conflictGroupTotal =
+      (hasAutophagy ? 1 : 0) + (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+    let total = habits.length;
+
+    if (hasAutophagy || hasOmad || hasMoran) {
+      const autophagyCompleted = todayLogs.some(
+        (l) =>
+          habits.find((h) => h._id === l.habitId)?.templateId === "autophagy" &&
+          l.completed
+      );
+
+      const currentMaxForGroup = autophagyCompleted
+        ? 1
+        : (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+      total = habits.length - conflictGroupTotal + currentMaxForGroup;
+    }
+
+    return { completed, total };
+  }, [habits, habitLogs]);
 
   const totalStreak = habits.reduce(
     (max, habit) => Math.max(max, getStreakForHabit(habit._id, habitLogs)),
     0
   );
 
-  const avgCompletion =
-    habits.length > 0
-      ? Math.round(
-          habits.reduce(
-            (sum, habit) => sum + getCompletionRate(habit._id, habitLogs, 7),
-            0
-          ) / habits.length
-        )
-      : 0;
+  // Calculate weekly average completion with mutual exclusivity
+  const avgCompletion = useMemo(() => {
+    if (habits.length === 0) return 0;
+
+    const hasAutophagy = habits.some((h) => h.templateId === "autophagy");
+    const hasOmad = habits.some((h) => h.templateId === "omad");
+    const hasMoran = habits.some((h) => h.templateId === "moran");
+    const conflictGroupTotal =
+      (hasAutophagy ? 1 : 0) + (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+    let totalPercentage = 0;
+    const daysToCalculate = 7;
+    const today = new Date();
+
+    for (let i = 0; i < daysToCalculate; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+
+      const dayLogs = habitLogs.filter((l) => l.date === dateStr);
+      const completed = dayLogs.filter((l) => l.completed).length;
+
+      let dailyTotal = habits.length;
+
+      // Apply mutual exclusivity logic if conflicts exist
+      if (hasAutophagy || hasOmad || hasMoran) {
+        const autophagyCompleted = dayLogs.some(
+          (l) =>
+            habits.find((h) => h._id === l.habitId)?.templateId ===
+              "autophagy" && l.completed
+        );
+
+        const currentMaxForGroup = autophagyCompleted
+          ? 1
+          : (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+        dailyTotal = habits.length - conflictGroupTotal + currentMaxForGroup;
+      }
+
+      const dailyPercentage =
+        dailyTotal > 0 ? (completed / dailyTotal) * 100 : 0;
+      totalPercentage += dailyPercentage;
+    }
+
+    return Math.round(totalPercentage / daysToCalculate);
+  }, [habits, habitLogs]);
 
   const activeGoals = goals.filter(
     (g) => g.currentValue < g.targetValue
   ).length;
 
   return (
-    <div className="px-3 md:px-8 py-4">
+    <div className="px-3 md:px-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">
+      <div className="text-center mb-4">
+        <h1 className="text-2xl font-bold text-primary">
           Welcome back, {user?.firstName || "there"}
         </h1>
         <p className="mt-1">Here's an overview of your habits and goals</p>
@@ -75,7 +140,7 @@ export default function DashboardPage() {
         {isLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
-              <Card key={i} className="border-none bg-muted">
+              <Card key={i} className="">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-4 rounded-full" />
@@ -89,65 +154,57 @@ export default function DashboardPage() {
           </>
         ) : (
           <>
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   Completed Today
                 </CardTitle>
                 <CheckCircle2 className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {completedToday}/{habits.length}
+                  {todayStats.completed}/{todayStats.total}
                 </div>
-                <p className="text-xs text-muted-foreground capitalize mt-2">
-                  habits completed
-                </p>
+                <p className="text-xs capitalize mt-2">habits completed</p>
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   Best Streak
                 </CardTitle>
                 <Flame className="h-4 w-4 text-chart-5" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalStreak}</div>
-                <p className="text-xs text-muted-foreground capitalize mt-2">
-                  consecutive days
-                </p>
+                <p className="text-xs capitalize mt-2">consecutive days</p>
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   Weekly Avg
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-chart-2" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{avgCompletion}%</div>
-                <p className="text-xs text-muted-foreground capitalize mt-2">
-                  completion rate
-                </p>
+                <p className="text-xs capitalize mt-2">completion rate</p>
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   Active Goals
                 </CardTitle>
                 <Target className="h-4 w-4 text-chart-4" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{activeGoals}</div>
-                <p className="text-xs text-muted-foreground capitalize mt-2">
-                  in progress
-                </p>
+                <p className="text-xs capitalize mt-2">in progress</p>
               </CardContent>
             </Card>
           </>
@@ -169,7 +226,7 @@ export default function DashboardPage() {
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="border-none bg-muted">
+              <Card key={i} className="">
                 <CardHeader>
                   <Skeleton className="h-6 w-32 mb-2" />
                   <Skeleton className="h-4 w-48" />
@@ -219,7 +276,7 @@ export default function DashboardPage() {
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="border-none bg-muted">
+              <Card key={i} className="">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

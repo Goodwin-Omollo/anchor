@@ -45,7 +45,7 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md">
       <p className="text-sm font-medium">{label}</p>
-      <p className="text-sm text-muted-foreground">{payload[0].value}%</p>
+      <p className="text-sm ">{payload[0].value}%</p>
     </div>
   );
 }
@@ -58,6 +58,12 @@ export default function InsightsPage() {
     const data = [];
     const today = new Date();
 
+    const hasAutophagy = habits.some((h) => h.templateId === "autophagy");
+    const hasOmad = habits.some((h) => h.templateId === "omad");
+    const hasMoran = habits.some((h) => h.templateId === "moran");
+    const conflictGroupTotal =
+      (hasAutophagy ? 1 : 0) + (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -65,7 +71,23 @@ export default function InsightsPage() {
 
       const dayLogs = habitLogs.filter((l) => l.date === dateStr);
       const completed = dayLogs.filter((l) => l.completed).length;
-      const total = habits.length;
+
+      let total = habits.length;
+
+      // Apply mutual exclusivity logic if conflicts exist
+      if (hasAutophagy || hasOmad || hasMoran) {
+        const autophagyCompleted = dayLogs.some(
+          (l) =>
+            habits.find((h) => h._id === l.habitId)?.templateId ===
+              "autophagy" && l.completed
+        );
+
+        const currentMaxForGroup = autophagyCompleted
+          ? 1
+          : (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+        total = habits.length - conflictGroupTotal + currentMaxForGroup;
+      }
 
       data.push({
         day: date.toLocaleDateString("en-US", { weekday: "short" }),
@@ -84,6 +106,12 @@ export default function InsightsPage() {
     const data = [];
     const today = new Date();
 
+    const hasAutophagy = habits.some((h) => h.templateId === "autophagy");
+    const hasOmad = habits.some((h) => h.templateId === "omad");
+    const hasMoran = habits.some((h) => h.templateId === "moran");
+    const conflictGroupTotal =
+      (hasAutophagy ? 1 : 0) + (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
     for (let i = 29; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -91,7 +119,23 @@ export default function InsightsPage() {
 
       const dayLogs = habitLogs.filter((l) => l.date === dateStr);
       const completed = dayLogs.filter((l) => l.completed).length;
-      const total = habits.length;
+
+      let total = habits.length;
+
+      // Apply mutual exclusivity logic if conflicts exist
+      if (hasAutophagy || hasOmad || hasMoran) {
+        const autophagyCompleted = dayLogs.some(
+          (l) =>
+            habits.find((h) => h._id === l.habitId)?.templateId ===
+              "autophagy" && l.completed
+        );
+
+        const currentMaxForGroup = autophagyCompleted
+          ? 1
+          : (hasOmad ? 1 : 0) + (hasMoran ? 1 : 0);
+
+        total = habits.length - conflictGroupTotal + currentMaxForGroup;
+      }
 
       data.push({
         date: date.toLocaleDateString("en-US", {
@@ -167,11 +211,11 @@ export default function InsightsPage() {
   }, [habits, goals, habitLogs]);
 
   return (
-    <div className="p-8">
+    <div className="px-3 md:px-6 mb-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Insights</h1>
-        <p className="mt-1 text-muted-foreground">
+      <div className="mb-4 text-center">
+        <h1 className="text-2xl text-primary font-bold">Insights</h1>
+        <p className="mt-1">
           Track your progress and analyze your habit patterns
         </p>
       </div>
@@ -181,7 +225,7 @@ export default function InsightsPage() {
         {isLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
-              <Card key={i} className="border-none bg-muted">
+              <Card key={i} className="">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-4 w-4 rounded-full" />
@@ -195,9 +239,9 @@ export default function InsightsPage() {
           </>
         ) : (
           <>
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   Overall Completion
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-primary" />
@@ -213,9 +257,9 @@ export default function InsightsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium ">
                   Best Streak
                 </CardTitle>
                 <Flame className="h-4 w-4 text-chart-5" />
@@ -224,15 +268,13 @@ export default function InsightsPage() {
                 <div className="text-2xl font-bold">
                   {overallStats.bestStreak} days
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Keep it going!
-                </p>
+                <p className="text-xs capitalize mt-1">Keep it going!</p>
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium ">
                   Goals Progress
                 </CardTitle>
                 <Target className="h-4 w-4 text-chart-4" />
@@ -241,24 +283,20 @@ export default function InsightsPage() {
                 <div className="text-2xl font-bold">
                   {overallStats.goalsCompleted}/{overallStats.totalGoals}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  goals achieved
-                </p>
+                <p className="text-xs capitalize mt-1">goals achieved</p>
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-muted">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium ">
                   Active Habits
                 </CardTitle>
                 <Calendar className="h-4 w-4 text-chart-2" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{habits.length}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  being tracked
-                </p>
+                <p className="text-xs capitalize mt-1">being tracked</p>
               </CardContent>
             </Card>
           </>
@@ -267,7 +305,7 @@ export default function InsightsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Weekly Completion Chart */}
-        <Card className="border-none bg-muted">
+        <Card className="">
           <CardHeader>
             <CardTitle>Weekly Overview</CardTitle>
             <CardDescription>
@@ -316,7 +354,7 @@ export default function InsightsPage() {
         </Card>
 
         {/* Monthly Trend */}
-        <Card className="border-none bg-muted">
+        <Card className="">
           <CardHeader>
             <CardTitle>30-Day Trend</CardTitle>
             <CardDescription>
@@ -363,7 +401,7 @@ export default function InsightsPage() {
         </Card>
 
         {/* Habit Performance */}
-        <Card className="border-none bg-muted">
+        <Card className="">
           <CardHeader>
             <CardTitle>Habit Performance</CardTitle>
             <CardDescription>Completion rates for each habit</CardDescription>
@@ -388,9 +426,7 @@ export default function InsightsPage() {
                 ))}
               </>
             ) : habitPerformance.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No habits to analyze yet
-              </p>
+              <p className="text-center  py-8">No habits to analyze yet</p>
             ) : (
               habitPerformance.map((habit) => (
                 <div key={habit.name} className="space-y-2">
@@ -403,7 +439,7 @@ export default function InsightsPage() {
                       <span className="text-sm font-medium">{habit.name}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
-                      <span className="flex items-center gap-1 text-muted-foreground">
+                      <span className="flex items-center gap-1 ">
                         <Flame className="h-3 w-3" />
                         {habit.streak}d
                       </span>
@@ -418,7 +454,7 @@ export default function InsightsPage() {
         </Card>
 
         {/* Goal Progress */}
-        <Card className="border-none bg-muted">
+        <Card className="">
           <CardHeader>
             <CardTitle>Goal Progress</CardTitle>
             <CardDescription>Track your goals with projections</CardDescription>
@@ -441,20 +477,19 @@ export default function InsightsPage() {
                 ))}
               </>
             ) : goalProgress.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No goals to track yet
-              </p>
+              <p className="text-center  py-8">No goals to track yet</p>
             ) : (
               goalProgress.map((goal) => (
                 <div key={goal._id} className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{goal.title}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {goal.currentValue} / {goal.targetValue} {goal.unit}
+                    <span className="text-sm ">
+                      {goal.currentValue.toFixed(1)} /{" "}
+                      {goal.targetValue.toFixed(1)} {goal.unit}
                     </span>
                   </div>
                   <Progress value={goal.progress} className="h-2" />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between text-xs ">
                     <span>{Math.round(goal.progress)}% complete</span>
                     {goal.projected && (
                       <span>
@@ -504,7 +539,7 @@ export default function InsightsPage() {
       </div>
 
       {/* Habit Correlations */}
-      {habits.length >= 2 && (
+      {/* {habits.length >= 2 && (
         <Card className="mt-6 border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle>Habit Correlations</CardTitle>
@@ -523,10 +558,7 @@ export default function InsightsPage() {
                 );
 
                 return (
-                  <div
-                    key={habit._id}
-                    className="rounded-lg border-none bg-muted p-4"
-                  >
+                  <div key={habit._id} className="rounded-lg  p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div
                         className="h-3 w-3 rounded-full"
@@ -535,14 +567,14 @@ export default function InsightsPage() {
                       <span className="font-medium">{habit.name}</span>
                     </div>
                     {linkedGoal ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm ">
                         When completed consistently ({completionRate}% this
                         month), contributes to{" "}
                         <span className="text-primary">{linkedGoal.title}</span>{" "}
                         goal progress.
                       </p>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm ">
                         {completionRate}% completion rate this month. Link to a
                         goal to track its impact.
                       </p>
@@ -553,7 +585,7 @@ export default function InsightsPage() {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </div>
   );
 }

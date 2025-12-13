@@ -5,8 +5,8 @@ import { HabitsProvider } from "@/lib/habits-context";
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <HabitsProvider>
-      <SidebarProvider>
-        <AppSidebar />
+      <SidebarProvider className="min-h-[calc(100svh-5rem)]!">
+        <AppSidebar className="top-16 h-[calc(100svh-5rem)]!" />
         <main className="flex-1 min-h-screen overflow-auto ">
           <div className="sticky top-0 z-10 px-4 py-2">
             <SidebarTrigger />

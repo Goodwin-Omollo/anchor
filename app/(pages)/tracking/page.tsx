@@ -6,8 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 
 export default function TrackingPage() {
   const { habits, habitLogs, logHabit, isLoading } = useHabits();
@@ -136,17 +143,15 @@ export default function TrackingPage() {
   }, [habits, dayLogs]);
 
   return (
-    <div className="p-3 md:p-8 py-4">
+    <div className="px-3 md:px-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Daily Tracking</h1>
-        <p className="mt-1 text-muted-foreground">
-          Check off your habits as you complete them
-        </p>
+      <div className="mb-4 text-center">
+        <h1 className="text-2xl text-primary font-bold">Daily Tracking</h1>
+        <p className="mt-1">Check off your habits as you complete them</p>
       </div>
 
       {/* Date Navigator */}
-      <Card className="mb-6 border-none bg-muted">
+      <Card className="mb-6 ">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <Button
@@ -161,11 +166,7 @@ export default function TrackingPage() {
                 {formatDate(selectedDate)}
               </p>
               {isToday && <span className="text-sm text-primary">Today</span>}
-              {isPastDate && (
-                <span className="text-sm text-muted-foreground">
-                  Past - View Only
-                </span>
-              )}
+              {isPastDate && <span className="text-sm">Past - View Only</span>}
             </div>
             <Button
               variant="ghost"
@@ -182,9 +183,7 @@ export default function TrackingPage() {
       {/* Week Overview */}
       <Card className="mb-6 border-border/50 bg-card/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Week Overview
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">Week Overview</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -223,7 +222,7 @@ export default function TrackingPage() {
                           : "hover:bg-secondary"
                     }`}
                   >
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs">
                       {day.toLocaleDateString("en-US", { weekday: "short" })}
                     </span>
                     <span className="text-lg font-semibold">
@@ -246,7 +245,7 @@ export default function TrackingPage() {
       {/* Progress Summary */}
       <div className="mb-6 flex items-center justify-between rounded-lg border border-border/50 bg-card/50 p-4">
         <div>
-          <p className="text-sm text-muted-foreground">Progress</p>
+          <p className="text-sm">Progress</p>
           <p className="text-2xl font-bold">
             {completedCount} / {maxAchievable}
           </p>
@@ -295,12 +294,18 @@ export default function TrackingPage() {
             ))}
           </>
         ) : dayLogs.length === 0 ? (
-          <Card className="border-dashed border-border/50 bg-card/30">
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                No habits to track. Add some habits from the Dashboard!
-              </p>
-            </CardContent>
+          <Card className="border-none bg-muted">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Sparkles className="h-5 w-5" />
+                </EmptyMedia>
+                <EmptyTitle>No habits to track</EmptyTitle>
+                <EmptyDescription>
+                  Add some habits from the Dashboard!
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
         ) : (
           dayLogs.map(({ habit, completed }) => (
@@ -330,15 +335,11 @@ export default function TrackingPage() {
                 />
                 <div className="flex-1">
                   <p
-                    className={`font-medium ${
-                      completed ? "line-through text-muted-foreground" : ""
-                    }`}
+                    className={`font-medium ${completed ? "line-through" : ""}`}
                   >
                     {habit.name}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {habit.description}
-                  </p>
+                  <p className="text-sm">{habit.description}</p>
                 </div>
                 {completed && (
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
