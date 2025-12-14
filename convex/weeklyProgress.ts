@@ -19,7 +19,7 @@ export const captureWeeklySnapshot = internalMutation({
     });
 
     for (const goal of activeGoals) {
-      const goalStartDate = new Date(goal.startDate);
+      const goalStartDate = new Date(goal.startDate || todayStr);
 
       // Calculate which week we're in
       const daysSinceStart = Math.floor(
@@ -174,7 +174,7 @@ export const getCurrentWeekProgress = query({
     if (!goal) return null;
 
     const today = new Date();
-    const goalStartDate = new Date(goal.startDate);
+    const goalStartDate = new Date(goal.startDate || today.toISOString());
 
     // Calculate current week number
     const daysSinceStart = Math.floor(
@@ -240,6 +240,38 @@ export const getCurrentWeekProgress = query({
       totalHabitsAvailable,
       completionRate,
       currentMetric,
+    };
+  },
+});
+
+/**
+ * Check if a weekly log exists for the current week
+ */
+export const getWeeklyLogStatus = query({
+  args: { goalId: v.id("goals") },
+  handler: async (ctx, args) => {
+    const goal = await ctx.db.get(args.goalId);
+    if (!goal) return null;
+
+    const today = new Date();
+    const goalStartDate = new Date(goal.startDate || today.toISOString());
+
+    // Calculate current week number
+    const daysSinceStart = Math.floor(
+      (today.getTime() - goalStartDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const currentWeekNumber = Math.max(1, Math.floor(daysSinceStart / 7) + 1);
+
+    const existingSnapshot = await ctx.db
+      .query("weeklyProgress")
+      .withIndex("by_week", (q) =>
+        q.eq("goalId", args.goalId).eq("weekNumber", currentWeekNumber)
+      )
+      .first();
+
+    return {
+      hasLogged: !!existingSnapshot,
+      weekNumber: currentWeekNumber,
     };
   },
 });

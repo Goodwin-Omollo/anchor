@@ -26,6 +26,7 @@ export default function AchievementsPage() {
   const allAchievements = useQuery(api.achievements.getAllWithStatus, {
     userId: user?.id || "",
   });
+  const goals = useQuery(api.goals.list, user ? { userId: user.id } : "skip");
 
   const syncNeeded = useQuery(api.achievements.checkSyncStatus);
 
@@ -53,14 +54,14 @@ export default function AchievementsPage() {
   if ((allAchievements && allAchievements.length === 0) || syncNeeded) {
     return (
       <div className="px-3 md:px-6">
-        <div className="mb-4 text-center">
+        <div className="mb-6 text-center">
           <h1 className="text-2xl text-primary font-bold">Achievements</h1>
           <p className="mt-1">
             Unlock badges by building habits and reaching milestones
           </p>
         </div>
 
-        <Card className="bg-muted border-none max-w-md mx-auto mt-8">
+        <Card className="bg-muted border-none">
           <Empty className="">
             <EmptyMedia variant="icon">
               <Trophy className="size-6" />
@@ -72,15 +73,17 @@ export default function AchievementsPage() {
                   : "New Achievements Available"}
               </EmptyTitle>
               <EmptyDescription>
-                {allAchievements && allAchievements.length === 0
-                  ? "Initialize the achievement system to start earning badges"
-                  : "Sync to get the latest badges and challenges"}
+                {!goals || goals.length === 0
+                  ? "You need at least one active goal to start earning achievements."
+                  : allAchievements && allAchievements.length === 0
+                    ? "Initialize the achievement system to start earning badges"
+                    : "Sync to get the latest badges and challenges"}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button
                 onClick={handleInitialize}
-                disabled={isInitializing}
+                disabled={isInitializing || !goals || goals.length === 0}
                 className="w-full"
               >
                 {isInitializing ? (
@@ -90,6 +93,8 @@ export default function AchievementsPage() {
                       ? "Initializing..."
                       : "Syncing..."}
                   </>
+                ) : !goals || goals.length === 0 ? (
+                  "Create a Goal First"
                 ) : allAchievements && allAchievements.length === 0 ? (
                   "Initialize Achievements"
                 ) : (

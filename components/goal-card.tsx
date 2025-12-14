@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Target, Calendar, Edit, Trash2 } from "lucide-react";
 import { EditGoalDialog } from "./edit-goal-dialogue";
-import { LogProgressDialog } from "./log-progress-dialog";
 import { Badge } from "./ui/badge";
 
 interface GoalCardProps {
@@ -27,7 +26,6 @@ interface GoalCardProps {
 export function GoalCard({ goal }: GoalCardProps) {
   const { habits, deleteGoal } = useHabits();
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showLogDialog, setShowLogDialog] = useState(false);
 
   const progress = (goal.currentValue / goal.targetValue) * 100;
   const projectedDate = getProjectedCompletion(goal);
@@ -56,10 +54,6 @@ export function GoalCard({ goal }: GoalCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setShowLogDialog(true)}>
-                <Target className="mr-2 h-4 w-4" />
-                Log Progress
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
@@ -126,11 +120,6 @@ export function GoalCard({ goal }: GoalCardProps) {
         goal={goal}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-      />
-      <LogProgressDialog
-        goal={goal}
-        open={showLogDialog}
-        onOpenChange={setShowLogDialog}
       />
     </>
   );

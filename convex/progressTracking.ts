@@ -113,13 +113,41 @@ export const logWeeklyProgress = mutation({
       userId: args.userId,
     };
 
+    let snapshotId;
     if (existingSnapshot) {
       // Update existing snapshot
       await ctx.db.patch(existingSnapshot._id, progressData);
-      return existingSnapshot._id;
+      snapshotId = existingSnapshot._id;
     } else {
       // Create new snapshot
-      return await ctx.db.insert("weeklyProgress", progressData);
+      snapshotId = await ctx.db.insert("weeklyProgress", progressData);
     }
+
+    // Update Goal current value and weight/books
+    // Fetch baseline (week 0) to calculate total progress
+    const baselineSnapshot = await ctx.db
+      .query("weeklyProgress")
+      .withIndex("by_week", (q) =>
+        q.eq("goalId", args.goalId).eq("weekNumber", 0)
+      )
+      .first();
+
+    let currentValue = 0;
+    if (baselineSnapshot) {
+      if (goal.type === "weight-loss" && args.weightValue !== undefined) {
+        const startWeight = baselineSnapshot.weightValue ?? 0;
+        currentValue = startWeight - args.weightValue; // Total weight lost
+      } else if (goal.type === "reading" && args.booksCompleted !== undefined) {
+        currentValue = args.booksCompleted; // Total books read
+      }
+    }
+
+    await ctx.db.patch(args.goalId, {
+      currentValue,
+      currentWeight: args.weightValue,
+      booksRead: args.booksCompleted,
+    });
+
+    return snapshotId;
   },
 });

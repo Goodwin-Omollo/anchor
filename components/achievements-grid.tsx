@@ -183,14 +183,13 @@ export function AchievementsGrid({
       </Card>
 
       {/* Streak Badges Section */}
-      <div className="space-y-3">
+      <div className="space-y-3 mb-8">
         <div className="flex items-center gap-2">
           <Flame className="h-5 w-5 text-orange-500" />
           <h2 className="text-xl font-semibold">Streak Badges</h2>
         </div>
         <p className="text-sm text-muted-foreground -mt-1">
-          Unlock badges as you maintain your streak. These reset if you lose
-          your streak.
+          Unlock badges as you maintain your streak.
         </p>
         <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {displayStreakBadges.map(renderAchievementCard)}
@@ -198,7 +197,7 @@ export function AchievementsGrid({
       </div>
 
       {/* Goal Completion Badges Section */}
-      <div className="space-y-3">
+      <div className="space-y-3 mb-8">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-blue-500" />
           <h2 className="text-xl font-semibold">Goal Completion Badges</h2>
@@ -206,7 +205,7 @@ export function AchievementsGrid({
         <p className="text-sm text-muted-foreground -mt-1">
           Unlock badges as you complete your goals. These badges are permanent.
         </p>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {displayGoalBadges.map(renderAchievementCard)}
         </div>
       </div>

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { MdAutoGraph, MdInsights, MdTrackChanges } from "react-icons/md";
-import { BsGraphUp, BsTrophy } from "react-icons/bs";
+import { BsGraphUp, BsTrophy, BsJournalCheck } from "react-icons/bs";
 import { IoSettingsOutline } from "react-icons/io5";
 import Image from "next/image";
 import Link from "next/link";
@@ -59,6 +59,11 @@ const items = [
     title: "Achievements",
     url: "/achievements",
     icon: BsTrophy,
+  },
+  {
+    title: "Weekly Logging",
+    url: "/weekly-logging",
+    icon: BsJournalCheck,
   },
 ];
 
